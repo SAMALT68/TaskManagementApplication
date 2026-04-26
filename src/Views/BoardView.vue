@@ -1,70 +1,49 @@
-
 <script setup lang="ts">
-type card = {
-  id: number
-  title: string
-  description: string
+import { useBoard } from '../composables/useBoard'
+import ListColumn from '../components/ListColumn.vue'
+import { useUser } from '../composables/useUser'
+import { onMounted } from 'vue'
+
+const { currentUser} = useUser()
+const { lists, addCard, loadTasks } = useBoard()
+
+onMounted(() => {
+  loadTasks()
+})
+
+function handleAddCard(payload: { listId: string; title: string }) {
+  console.log("EVENT RECEIVED:", payload)
+  addCard(payload.listId, payload.title)
 }
-
-type list = {
-  id: number
-  title: string
-  cards: card[]
-}
-
-const lists: list[] = [
-  {
-    id: 1,
-    title: 'To do',
-    cards: [
-      { id: 1, title: 'Task 1', description: 'Description for Task 1' },
-      { id: 2, title: 'Task 2', description: 'Description for Task 2' },
-    ],
-  },
-  {
-    id: 2,
-    title: 'This Week',
-    cards: [],
-  },
-  {
-    id: 3,
-    title: 'Completed',
-    cards: [],
-  },
-]
-
-
 </script>
-
+  
 <template>
-<div class="flex gap-4 overflow-x-auto p-4 h-full"></div>
-<ListColumn
-  v-for="list in lists"
-  :key="list.id"
-  :list="list"
-/>
+  <div class="p-4 flex gap-4 items-center bg-gray-200">
+  <div>
+    <span class="font-semibold">User:</span>
+    {{ currentUser.name }}
+  </div>
 
-  <div class="board">
-    <div class="columns">
-      <div class="column" v-for="list in lists" :key="list.id">
-        <h3>{{ list.title }}</h3>
-        <div class="card" v-for="card in list.cards" :key="card.id">
-          <h4>{{ card.title }}</h4>
-          <p>{{ card.description }}</p>
-        </div>
-        <button>Add Card</button>
-      </div> 
-
-      <div class="column">
-        <h3>This Week</h3>
-        <button>Add Card</button>
-      </div>
-
-      <div class="column">
-        <h3>Completed</h3>
-        <button>Add Card</button>
-      </div>
+  <div>
+    <span class="font-semibold">Role:</span>
+    <select
+      v-model="currentUser.role"
+      class="ml-2 p-1 rounded border"
+    >
+      <option value="admin">Admin</option>
+      <option value="member">Member</option>
+      <option value="viewer">Viewer</option>
+    </select>
+  </div>
+</div>
+  <div class="h-full w-full overflow-x-auto">
+    <div class="flex gap-4 p-4">
+      <ListColumn
+        v-for="list in lists"
+        :key="list.id"
+        :list="list"
+        @add-card="handleAddCard"
+      />
     </div>
   </div>
 </template>
-
