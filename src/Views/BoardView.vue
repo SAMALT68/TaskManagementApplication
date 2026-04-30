@@ -1,14 +1,16 @@
 <script setup lang="ts">
+import { onMounted, watch } from 'vue'
 import { useBoard } from '../composables/useBoard'
+import { useAuth } from '../composables/useAuth'
 import ListColumn from '../components/ListColumn.vue'
-import { useUser } from '../composables/useUser'
-import { onMounted } from 'vue'
 
-const { currentUser} = useUser()
 const { lists, addCard, loadTasks } = useBoard()
+const { currentUser, userProfile, logout } = useAuth()
 
-onMounted(() => {
-  loadTasks()
+watch(userProfile, (profile) => {
+  if (profile) {
+    loadTasks()
+  }
 })
 
 function handleAddCard(payload: { listId: string; title: string }) {
@@ -16,26 +18,29 @@ function handleAddCard(payload: { listId: string; title: string }) {
   addCard(payload.listId, payload.title)
 }
 </script>
-  
+
 <template>
-  <div class="p-4 flex gap-4 items-center bg-gray-200">
-  <div>
-    <span class="font-semibold">User:</span>
-    {{ currentUser.name }}
+  <!-- Top user/auth bar -->
+  <div class="flex items-center justify-between p-4 bg-gray-200">
+    <div>
+      <p class="font-semibold">
+        Logged in as: {{ currentUser?.email }}
+      </p>
+
+      <p class="text-sm text-gray-600">
+        Role: {{ userProfile?.role }} | Project: {{ userProfile?.projectId }}
+      </p>
+    </div>
+
+    <button
+      @click="logout"
+      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+    >
+      Logout
+    </button>
   </div>
 
-  <div>
-    <span class="font-semibold">Role:</span>
-    <select
-      v-model="currentUser.role"
-      class="ml-2 p-1 rounded border"
-    >
-      <option value="admin">Admin</option>
-      <option value="member">Member</option>
-      <option value="viewer">Viewer</option>
-    </select>
-  </div>
-</div>
+  <!-- Board -->
   <div class="h-full w-full overflow-x-auto">
     <div class="flex gap-4 p-4">
       <ListColumn

@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { db } from '../firebase'
 import { collection, addDoc, onSnapshot } from 'firebase/firestore'
-import { useUser } from './useUser'
+import { useAuth } from './useAuth'
 
 
 export type Card = {
@@ -34,7 +34,7 @@ const lists = ref<List[]>([
 ])
 
 function loadTasks() {
-  const { currentUser } = useUser()
+  const { userProfile } = useAuth()
   const tasksRef = collection(db, 'tasks')
 
   onSnapshot(tasksRef, (snapshot) => {
@@ -43,8 +43,8 @@ function loadTasks() {
     snapshot.forEach(doc => {
       const data = doc.data()
 
-      // 🚫 Filter by project
-      if (data.projectId !== currentUser.value.projectId) return
+      if (!userProfile.value) return
+      if (data.projectId !== userProfile.value.projectId) return
 
       const list = lists.value.find(l => l.id === data.listId)
       if (!list) return
@@ -59,10 +59,15 @@ function loadTasks() {
 async function addCard(listId: string, title: string) {
   console.log("ADD CARD FUNCTION HIT")
 
-  const { currentUser } = useUser()
+  const { currentUser, userProfile } = useAuth()
 
-  if (currentUser.value.role === 'viewer') {
-    alert('You do not have permission')
+  if (!currentUser.value || !userProfile.value) {
+    alert('You must be logged in to add tasks')
+    return
+  }
+
+  if (userProfile.value.role === 'viewer') {
+    alert('You do not have permission to add tasks')
     return
   }
 
@@ -72,15 +77,14 @@ async function addCard(listId: string, title: string) {
     await addDoc(collection(db, 'tasks'), {
       title,
       listId,
-      userId: currentUser.value.id,
-      role: currentUser.value.role,
-      projectId: currentUser.value.projectId,
+      userId: currentUser.value.uid,
+      role: userProfile.value.role,
+      projectId: userProfile.value.projectId,
       createdAt: new Date()
     })
 
     console.log("SUCCESS writing to Firebase")
 
-    // ✅ Update UI locally
     const list = lists.value.find(l => l.id === listId)
     if (!list) return
 
