@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { watch } from 'vue'
 import { useBoard } from '../composables/useBoard'
 import { useAuth } from '../composables/useAuth'
 import ListColumn from '../components/ListColumn.vue'
 
-const { lists, addCard, loadTasks } = useBoard()
+const { lists, addCard, deleteCard, loadTasks } = useBoard()
 const { currentUser, userProfile, logout } = useAuth()
 
-watch(userProfile, (profile) => {
-  if (profile) {
-    loadTasks()
-  }
-})
+watch(
+  userProfile,
+  (profile) => {
+    console.log('USER PROFILE WATCH:', profile)
 
+    if (profile) {
+      loadTasks()
+    }
+  },
+  { immediate: true }
+)
+
+function handleDeleteCard(cardId: string) {
+  deleteCard(cardId)
+}
 function handleAddCard(payload: { listId: string; title: string }) {
   console.log("EVENT RECEIVED:", payload)
   addCard(payload.listId, payload.title)
@@ -48,6 +57,7 @@ function handleAddCard(payload: { listId: string; title: string }) {
         :key="list.id"
         :list="list"
         @add-card="handleAddCard"
+          @delete-card="handleDeleteCard"
       />
     </div>
   </div>

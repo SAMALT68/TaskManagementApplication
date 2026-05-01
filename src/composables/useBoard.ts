@@ -1,8 +1,15 @@
 import { ref } from 'vue'
 import { db } from '../firebase'
-import { collection, addDoc, onSnapshot } from 'firebase/firestore'
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  where, 
+  deleteDoc, 
+  doc
+} from 'firebase/firestore'
 import { useAuth } from './useAuth'
-
 
 export type Card = {
   id: string
@@ -33,32 +40,7 @@ const lists = ref<List[]>([
   }
 ])
 
-function loadTasks() {
-  const { userProfile } = useAuth()
-  const tasksRef = collection(db, 'tasks')
-
-  onSnapshot(tasksRef, (snapshot) => {
-    lists.value.forEach(list => list.cards = [])
-
-    snapshot.forEach(doc => {
-      const data = doc.data()
-
-      if (!userProfile.value) return
-      if (data.projectId !== userProfile.value.projectId) return
-
-      const list = lists.value.find(l => l.id === data.listId)
-      if (!list) return
-
-      list.cards.push({
-        id: doc.id,
-        title: data.title
-      })
-    })
-  })
-}
 async function addCard(listId: string, title: string) {
-  console.log("ADD CARD FUNCTION HIT")
-
   const { currentUser, userProfile } = useAuth()
 
   if (!currentUser.value || !userProfile.value) {
@@ -72,8 +54,6 @@ async function addCard(listId: string, title: string) {
   }
 
   try {
-    console.log("Writing to Firebase...")
-
     await addDoc(collection(db, 'tasks'), {
       title,
       listId,
@@ -82,26 +62,74 @@ async function addCard(listId: string, title: string) {
       projectId: userProfile.value.projectId,
       createdAt: new Date()
     })
-
-    console.log("SUCCESS writing to Firebase")
-
-    const list = lists.value.find(l => l.id === listId)
-    if (!list) return
-
-    list.cards.push({
-      id: Date.now().toString(),
-      title
-    })
-
   } catch (error) {
-    console.error("Firebase error:", error)
+    console.error('FIRESTORE WRITE ERROR:', error)
   }
 }
+async function deleteCard(cardId: string) {
+  const { userProfile } = useAuth()
+
+  if (!userProfile.value) {
+    alert('User profile not loaded')
+    return
+  }
+
+  if (userProfile.value.role !== 'admin') {
+    alert('Only admins can delete tasks')
+    return
+  }
+
+  try {
+    await deleteDoc(doc(db, 'tasks', cardId))
+    console.log('Task deleted successfully')
+  } catch (error) {
+    console.error('FIRESTORE DELETE ERROR:', error)
+    alert('Delete failed. Check permissions.')
+  }
+}
+function loadTasks() {
+  const { userProfile } = useAuth()
+
+  if (!userProfile.value) {
+    console.log('No user profile loaded yet')
+    return
+  }
+
+  const tasksQuery = query(
+    collection(db, 'tasks'),
+    where('projectId', '==', userProfile.value.projectId)
+  )
+
+  onSnapshot(
+    tasksQuery,
+    (snapshot) => {
+      lists.value.forEach(list => {
+        list.cards = []
+      })
+
+      snapshot.forEach(doc => {
+        const data = doc.data()
+
+        const list = lists.value.find(l => l.id === data.listId)
+        if (!list) return
+
+        list.cards.push({
+          id: doc.id,
+          title: data.title
+        })
+      })
+    },
+    (error) => {
+      console.error('FIRESTORE READ ERROR:', error)
+    }
+  )
+}
+
 export function useBoard() {
   return {
     lists,
     addCard,
+    deleteCard,
     loadTasks
   }
 }
-

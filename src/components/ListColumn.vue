@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'add-card', payload: { listId: string; title: string }): void
+    (e: 'delete-card', cardId: string): void
 }>()
 
 const isAdding = ref(false)
@@ -60,6 +61,7 @@ function cancel() {
         v-for="card in list.cards"
         :key="card.id"
         :card="card"
+        @delete-card="emit('delete-card', $event)"
       />
     </div>
 
