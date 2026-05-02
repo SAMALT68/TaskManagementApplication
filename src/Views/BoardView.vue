@@ -4,7 +4,7 @@ import { useBoard } from '../composables/useBoard'
 import { useAuth } from '../composables/useAuth'
 import ListColumn from '../components/ListColumn.vue'
 
-const { lists, addCard, deleteCard, loadTasks } = useBoard()
+const { lists, addCard, deleteCard, updateCard, loadTasks } = useBoard()
 const { currentUser, userProfile, logout } = useAuth()
 
 watch(
@@ -21,6 +21,10 @@ watch(
 
 function handleDeleteCard(cardId: string) {
   deleteCard(cardId)
+}
+function handleUpdateCard(payload: { cardId: string; title: string }) {
+  console.log('UPDATE EVENT RECEIVED:', payload)
+  updateCard(payload.cardId, payload.title)
 }
 function handleAddCard(payload: { listId: string; title: string }) {
   console.log("EVENT RECEIVED:", payload)
@@ -58,6 +62,7 @@ function handleAddCard(payload: { listId: string; title: string }) {
         :list="list"
         @add-card="handleAddCard"
           @delete-card="handleDeleteCard"
+          @update-card="handleUpdateCard"
       />
     </div>
   </div>

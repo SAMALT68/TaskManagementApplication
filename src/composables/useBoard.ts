@@ -7,7 +7,8 @@ import {
   query,
   where, 
   deleteDoc, 
-  doc
+  doc,
+  updateDoc
 } from 'firebase/firestore'
 import { useAuth } from './useAuth'
 
@@ -87,6 +88,32 @@ async function deleteCard(cardId: string) {
     alert('Delete failed. Check permissions.')
   }
 }
+
+async function updateCard(cardId: string, newTitle: string) {
+  const { userProfile } = useAuth()
+
+  if (!userProfile.value) {
+    alert('User profile not loaded')
+    return
+  }
+
+  if (userProfile.value.role === 'viewer') {
+    alert('Viewers cannot update tasks')
+    return
+  }
+
+  try {
+    await updateDoc(doc(db, 'tasks', cardId), {
+      title: newTitle,
+      updatedAt: new Date()
+    })
+
+    console.log('Task updated successfully')
+  } catch (error) {
+    console.error('FIRESTORE UPDATE ERROR:', error)
+    alert('Update failed. Check permissions.')
+  }
+}
 function loadTasks() {
   const { userProfile } = useAuth()
 
@@ -130,6 +157,7 @@ export function useBoard() {
     lists,
     addCard,
     deleteCard,
+    updateCard,
     loadTasks
   }
 }

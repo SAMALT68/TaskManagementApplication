@@ -24,6 +24,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'add-card', payload: { listId: string; title: string }): void
     (e: 'delete-card', cardId: string): void
+  (e: 'update-card', payload: { cardId: string; title: string }): void
 }>()
 
 const isAdding = ref(false)
@@ -62,6 +63,7 @@ function cancel() {
         :key="card.id"
         :card="card"
         @delete-card="emit('delete-card', $event)"
+        @update-card="emit('update-card', $event)"
       />
     </div>
 
