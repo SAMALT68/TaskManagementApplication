@@ -90,12 +90,16 @@ async function deleteCard(cardId: string) {
 }
 
 async function updateCard(cardId: string, newTitle: string) {
+  console.log('UPDATE CARD FUNCTION HIT:', cardId, newTitle)
+
   const { userProfile } = useAuth()
 
   if (!userProfile.value) {
     alert('User profile not loaded')
     return
   }
+
+  console.log('CURRENT ROLE:', userProfile.value.role)
 
   if (userProfile.value.role === 'viewer') {
     alert('Viewers cannot update tasks')
@@ -112,6 +116,32 @@ async function updateCard(cardId: string, newTitle: string) {
   } catch (error) {
     console.error('FIRESTORE UPDATE ERROR:', error)
     alert('Update failed. Check permissions.')
+  }
+}
+
+async function moveCard(cardId: string, newListId: string) {
+  const { userProfile } = useAuth()
+
+  if (!userProfile.value) {
+    alert('User profile not loaded')
+    return
+  }
+
+  if (userProfile.value.role === 'viewer') {
+    alert('Viewers cannot move tasks')
+    return
+  }
+
+  try {
+    await updateDoc(doc(db, 'tasks', cardId), {
+      listId: newListId,
+      updatedAt: new Date()
+    })
+
+    console.log('Task moved successfully')
+  } catch (error) {
+    console.error('FIRESTORE MOVE ERROR:', error)
+    alert('Move failed. Check permissions.')
   }
 }
 function loadTasks() {
@@ -158,6 +188,7 @@ export function useBoard() {
     addCard,
     deleteCard,
     updateCard,
+    moveCard,
     loadTasks
   }
 }

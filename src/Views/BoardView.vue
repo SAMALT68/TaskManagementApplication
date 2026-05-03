@@ -4,7 +4,7 @@ import { useBoard } from '../composables/useBoard'
 import { useAuth } from '../composables/useAuth'
 import ListColumn from '../components/ListColumn.vue'
 
-const { lists, addCard, deleteCard, updateCard, loadTasks } = useBoard()
+const { lists, addCard, deleteCard, updateCard,moveCard, loadTasks } = useBoard()
 const { currentUser, userProfile, logout } = useAuth()
 
 watch(
@@ -29,6 +29,9 @@ function handleUpdateCard(payload: { cardId: string; title: string }) {
 function handleAddCard(payload: { listId: string; title: string }) {
   console.log("EVENT RECEIVED:", payload)
   addCard(payload.listId, payload.title)
+}
+function handleMoveCard(payload: { cardId: string; newListId: string }) {
+  moveCard(payload.cardId, payload.newListId)
 }
 </script>
 
@@ -56,13 +59,16 @@ function handleAddCard(payload: { listId: string; title: string }) {
   <!-- Board -->
   <div class="h-full w-full overflow-x-auto">
     <div class="flex gap-4 p-4">
-      <ListColumn
-        v-for="list in lists"
+        <ListColumn
+        v-for="(list, index) in lists"
         :key="list.id"
         :list="list"
+        :lists="lists"
+        :list-index="index"
         @add-card="handleAddCard"
-          @delete-card="handleDeleteCard"
-          @update-card="handleUpdateCard"
+        @delete-card="handleDeleteCard"
+        @update-card="handleUpdateCard"
+        @move-card="handleMoveCard"
       />
     </div>
   </div>

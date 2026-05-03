@@ -19,12 +19,19 @@ const props = defineProps<{
     title: string
     cards: { id: string; title: string }[]
   }
+  lists: {
+    id: string
+    title: string
+    cards: { id: string; title: string }[]
+  }[]
+  listIndex: number
 }>()
 
 const emit = defineEmits<{
   (e: 'add-card', payload: { listId: string; title: string }): void
     (e: 'delete-card', cardId: string): void
   (e: 'update-card', payload: { cardId: string; title: string }): void
+  (e: 'move-card', payload: { cardId: string; newListId: string }): void
 }>()
 
 const isAdding = ref(false)
@@ -47,6 +54,26 @@ function cancel() {
   newTitle.value = ''
   isAdding.value = false
 }
+
+function moveLeft(cardId: string) {
+  const previousList = props.lists[props.listIndex - 1]
+  if (!previousList) return
+
+  emit('move-card', {
+    cardId,
+    newListId: previousList.id
+  })
+}
+
+function moveRight(cardId: string) {
+  const nextList = props.lists[props.listIndex + 1]
+  if (!nextList) return
+
+  emit('move-card', {
+    cardId,
+    newListId: nextList.id
+  })
+}
 </script>
 
 <template>
@@ -57,15 +84,37 @@ function cancel() {
     </h3>
 
     <!-- Cards -->
-    <div class="flex flex-col gap-2">
-      <TaskCard
-        v-for="card in list.cards"
-        :key="card.id"
-        :card="card"
-        @delete-card="emit('delete-card', $event)"
-        @update-card="emit('update-card', $event)"
-      />
-    </div>
+   <div
+  v-for="card in list.cards"
+  :key="card.id"
+  class="space-y-1"
+>
+  <TaskCard
+    :card="card"
+    @delete-card="emit('delete-card', $event)"
+    @update-card="emit('update-card', $event)"
+  />
+
+  <div class="flex justify-between text-xs">
+    <button
+      v-if="listIndex > 0"
+      @click="moveLeft(card.id)"
+      class="text-gray-500 hover:text-blue-600"
+    >
+      ← Move
+    </button>
+
+    <span v-else></span>
+
+    <button
+      v-if="listIndex < lists.length - 1"
+      @click="moveRight(card.id)"
+      class="text-gray-500 hover:text-blue-600"
+    >
+      Move →
+    </button>
+  </div>
+</div>
 
     <!-- Add Card Section -->
     <div class="mt-3">

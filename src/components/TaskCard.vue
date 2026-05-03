@@ -11,6 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'delete-card', cardId: string): void
  (e: 'update-card', payload: { cardId: string; title: string }): void
+   (e: 'update-card', payload: { cardId: string; title: string }): void
 }>()
 
 const isEditing = ref(false)
