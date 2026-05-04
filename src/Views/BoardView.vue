@@ -4,8 +4,34 @@ import { useBoard } from '../composables/useBoard'
 import { useAuth } from '../composables/useAuth'
 import ListColumn from '../components/ListColumn.vue'
 
-const { lists, addCard, deleteCard, updateCard,moveCard, loadTasks } = useBoard()
-const { currentUser, userProfile, logout } = useAuth()
+const props = defineProps<{
+  workspace: {
+    id: string
+    title: string
+    projectId: string
+    borderClass: string
+    bgClass: string
+  }
+}>()
+
+const emit = defineEmits<{
+  (e: 'back-to-workspaces'): void
+}>()
+
+const {
+  lists,
+  addCard,
+  deleteCard,
+  updateCard,
+  moveCard,
+  loadTasks
+} = useBoard()
+
+const {
+  currentUser,
+  userProfile,
+  logout
+} = useAuth()
 
 watch(
   userProfile,
@@ -13,23 +39,24 @@ watch(
     console.log('USER PROFILE WATCH:', profile)
 
     if (profile) {
-      loadTasks()
+      loadTasks(props.workspace.id)
     }
   },
   { immediate: true }
 )
 
+function handleAddCard(payload: { listId: string; title: string }) {
+  addCard(payload.listId, payload.title, props.workspace.id)
+}
+
 function handleDeleteCard(cardId: string) {
   deleteCard(cardId)
 }
+
 function handleUpdateCard(payload: { cardId: string; title: string }) {
-  console.log('UPDATE EVENT RECEIVED:', payload)
   updateCard(payload.cardId, payload.title)
 }
-function handleAddCard(payload: { listId: string; title: string }) {
-  console.log("EVENT RECEIVED:", payload)
-  addCard(payload.listId, payload.title)
-}
+
 function handleMoveCard(payload: { cardId: string; newListId: string }) {
   moveCard(payload.cardId, payload.newListId)
 }
@@ -39,7 +66,18 @@ function handleMoveCard(payload: { cardId: string; newListId: string }) {
   <!-- Top user/auth bar -->
   <div class="flex items-center justify-between p-4 bg-gray-200">
     <div>
-      <p class="font-semibold">
+      <button
+        @click="emit('back-to-workspaces')"
+        class="text-sm text-blue-600 hover:text-blue-800 mb-2"
+      >
+        ← Back to Workspaces
+      </button>
+
+      <h1 class="text-xl font-bold text-gray-800">
+        {{ workspace.title }}
+      </h1>
+
+      <p class="text-sm text-gray-600">
         Logged in as: {{ currentUser?.email }}
       </p>
 
@@ -59,7 +97,7 @@ function handleMoveCard(payload: { cardId: string; newListId: string }) {
   <!-- Board -->
   <div class="h-full w-full overflow-x-auto">
     <div class="flex gap-4 p-4">
-        <ListColumn
+      <ListColumn
         v-for="(list, index) in lists"
         :key="list.id"
         :list="list"

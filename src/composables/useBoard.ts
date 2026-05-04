@@ -5,8 +5,8 @@ import {
   addDoc,
   onSnapshot,
   query,
-  where, 
-  deleteDoc, 
+  where,
+  deleteDoc,
   doc,
   updateDoc
 } from 'firebase/firestore'
@@ -41,7 +41,7 @@ const lists = ref<List[]>([
   }
 ])
 
-async function addCard(listId: string, title: string) {
+async function addCard(listId: string, title: string, workspaceId: string) {
   const { currentUser, userProfile } = useAuth()
 
   if (!currentUser.value || !userProfile.value) {
@@ -58,6 +58,7 @@ async function addCard(listId: string, title: string) {
     await addDoc(collection(db, 'tasks'), {
       title,
       listId,
+      workspaceId,
       userId: currentUser.value.uid,
       role: userProfile.value.role,
       projectId: userProfile.value.projectId,
@@ -67,6 +68,7 @@ async function addCard(listId: string, title: string) {
     console.error('FIRESTORE WRITE ERROR:', error)
   }
 }
+
 async function deleteCard(cardId: string) {
   const { userProfile } = useAuth()
 
@@ -90,16 +92,12 @@ async function deleteCard(cardId: string) {
 }
 
 async function updateCard(cardId: string, newTitle: string) {
-  console.log('UPDATE CARD FUNCTION HIT:', cardId, newTitle)
-
   const { userProfile } = useAuth()
 
   if (!userProfile.value) {
     alert('User profile not loaded')
     return
   }
-
-  console.log('CURRENT ROLE:', userProfile.value.role)
 
   if (userProfile.value.role === 'viewer') {
     alert('Viewers cannot update tasks')
@@ -144,17 +142,19 @@ async function moveCard(cardId: string, newListId: string) {
     alert('Move failed. Check permissions.')
   }
 }
-function loadTasks() {
+
+function loadTasks(workspaceId: string) {
   const { userProfile } = useAuth()
 
   if (!userProfile.value) {
-    console.log('No user profile loaded yet')
+    console.log('No user profile yet')
     return
   }
 
   const tasksQuery = query(
     collection(db, 'tasks'),
-    where('projectId', '==', userProfile.value.projectId)
+    where('projectId', '==', userProfile.value.projectId),
+    where('workspaceId', '==', workspaceId)
   )
 
   onSnapshot(
