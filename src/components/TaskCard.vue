@@ -10,8 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'delete-card', cardId: string): void
- (e: 'update-card', payload: { cardId: string; title: string }): void
-   (e: 'update-card', payload: { cardId: string; title: string }): void
+  (e: 'update-card', payload: { cardId: string; title: string }): void
 }>()
 
 const isEditing = ref(false)
@@ -40,35 +39,37 @@ function cancelEdit() {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition">
+  <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+    <!-- Editing Mode -->
     <div v-if="isEditing">
       <input
         v-model="editedTitle"
         @keydown.enter.prevent="saveEdit"
         @keydown.esc="cancelEdit"
-        class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
-      <div class="flex gap-2 mt-2">
+      <div class="flex gap-2 mt-3">
         <button
           @click="saveEdit"
-          class="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+          class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700"
         >
           Save
         </button>
 
         <button
           @click="cancelEdit"
-          class="text-gray-500 text-sm"
+          class="text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-100"
         >
           Cancel
         </button>
       </div>
     </div>
 
-    <div v-else class="flex items-center justify-between gap-2">
+    <!-- Display Mode -->
+    <div v-else class="flex items-start justify-between gap-3">
       <p
-        class="text-sm text-gray-800 cursor-pointer flex-1"
+        class="text-sm font-medium text-gray-800 cursor-pointer flex-1 text-left leading-snug"
         @click="startEditing"
       >
         {{ card.title }}
@@ -76,7 +77,8 @@ function cancelEdit() {
 
       <button
         @click.stop="emit('delete-card', card.id)"
-        class="text-red-500 hover:text-red-700 text-sm font-bold"
+        class="text-red-500 hover:text-red-700 text-sm font-bold leading-none"
+        title="Delete task"
       >
         ×
       </button>

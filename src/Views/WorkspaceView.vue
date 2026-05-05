@@ -5,13 +5,20 @@ import {
   useWorkspaces,
   type Workspace
 } from '../composables/useWorkspaces'
+import AppTopBar from '../components/AppTopBar.vue'
 
 const emit = defineEmits<{
   (e: 'open-workspace', workspace: Workspace): void
 }>()
 
 const { userProfile } = useAuth()
-const { workspaces, loadWorkspaces, createWorkspace } = useWorkspaces()
+
+const {
+  workspaces,
+  loadWorkspaces,
+  createWorkspace,
+  deleteWorkspace
+} = useWorkspaces()
 
 const showForm = ref(false)
 const newWorkspaceTitle = ref('')
@@ -39,11 +46,27 @@ function cancelCreate() {
   newWorkspaceTitle.value = ''
   showForm.value = false
 }
+
+async function handleDeleteWorkspace(workspaceId: string) {
+  const confirmed = confirm(
+    'Are you sure you want to delete this workspace? This may also remove tasks linked to it.'
+  )
+
+  if (!confirmed) return
+
+  await deleteWorkspace(workspaceId)
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-100">
+    <AppTopBar
+      title="SwiftTask"
+      subtitle="My Workspaces"
+    />
+
     <div class="p-6">
+      <!-- Page Header -->
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">
@@ -51,7 +74,7 @@ function cancelCreate() {
           </h1>
 
           <p class="text-sm text-gray-600 mt-1">
-            Project: {{ userProfile?.projectId }}
+            Select a workspace to open its task board.
           </p>
         </div>
 
@@ -64,6 +87,7 @@ function cancelCreate() {
         </button>
       </div>
 
+      <!-- Create Workspace Form -->
       <div
         v-if="showForm"
         class="bg-white p-4 rounded-xl shadow-sm mb-6 max-w-md"
@@ -96,6 +120,7 @@ function cancelCreate() {
         </div>
       </div>
 
+      <!-- Empty State -->
       <div
         v-if="workspaces.length === 0"
         class="bg-white p-6 rounded-xl shadow-sm max-w-md text-gray-600"
@@ -103,22 +128,38 @@ function cancelCreate() {
         No workspaces yet. Create one to get started.
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
-        <button
+      <!-- Workspace Grid -->
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl"
+      >
+        <div
           v-for="workspace in workspaces"
           :key="workspace.id"
-          @click="emit('open-workspace', workspace)"
-          class="h-36 text-left p-4 border-2 rounded-md hover:shadow-md transition"
+          class="relative h-36 text-left p-4 border-2 rounded-md hover:shadow-md transition cursor-pointer"
           :class="[workspace.borderClass, workspace.bgClass]"
+          @click="emit('open-workspace', workspace)"
         >
-          <h2 class="font-semibold text-gray-800">
+          <h2 class="font-semibold text-gray-800 pr-8">
             {{ workspace.title }}
           </h2>
 
           <p class="text-sm text-gray-600 mt-2">
             Project: {{ workspace.projectId }}
           </p>
-        </button>
+
+          <p class="text-xs text-gray-500 mt-1">
+            Click to open board
+          </p>
+
+          <button
+            @click.stop="handleDeleteWorkspace(workspace.id)"
+            class="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-lg"
+            title="Delete workspace"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   </div>

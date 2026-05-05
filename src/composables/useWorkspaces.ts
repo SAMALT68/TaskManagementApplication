@@ -5,7 +5,9 @@ import {
   addDoc,
   onSnapshot,
   query,
-  where
+  where, 
+  deleteDoc, 
+  doc
 } from 'firebase/firestore'
 import { useAuth } from './useAuth'
 
@@ -107,11 +109,32 @@ async function createWorkspace(title: string) {
     alert('Workspace creation failed')
   }
 }
+async function deleteWorkspace(workspaceId: string) {
+  const { userProfile } = useAuth()
 
+  if (!userProfile.value) {
+    alert('User profile not loaded')
+    return
+  }
+
+  if (userProfile.value.role !== 'admin') {
+    alert('Only admins can delete workspaces')
+    return
+  }
+
+  try {
+    await deleteDoc(doc(db, 'workspaces', workspaceId))
+    console.log('Workspace deleted successfully')
+  } catch (error) {
+    console.error('FIRESTORE WORKSPACE DELETE ERROR:', error)
+    alert('Workspace deletion failed. Check permissions.')
+  }
+}
 export function useWorkspaces() {
   return {
     workspaces,
     loadWorkspaces,
-    createWorkspace
+    createWorkspace,
+    deleteWorkspace
   }
 }

@@ -14,22 +14,14 @@ type List = {
 }
 
 const props = defineProps<{
-  list: {
-    id: string
-    title: string
-    cards: { id: string; title: string }[]
-  }
-  lists: {
-    id: string
-    title: string
-    cards: { id: string; title: string }[]
-  }[]
+  list: List
+  lists: List[]
   listIndex: number
 }>()
 
 const emit = defineEmits<{
   (e: 'add-card', payload: { listId: string; title: string }): void
-    (e: 'delete-card', cardId: string): void
+  (e: 'delete-card', cardId: string): void
   (e: 'update-card', payload: { cardId: string; title: string }): void
   (e: 'move-card', payload: { cardId: string; newListId: string }): void
 }>()
@@ -38,8 +30,7 @@ const isAdding = ref(false)
 const newTitle = ref('')
 
 function submit() {
-  console.log("SUBMIT TRIGGERED")
-  if (!newTitle.value.trim()) return  
+  if (!newTitle.value.trim()) return
 
   emit('add-card', {
     listId: props.list.id,
@@ -77,66 +68,75 @@ function moveRight(cardId: string) {
 </script>
 
 <template>
-  <div class="bg-gray-100 rounded-xl p-3 w-64 shrink-0">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 w-72 shrink-0 min-h-[360px]">
     <!-- Column Title -->
-    <h3 class="font-semibold mb-3 text-gray-700">
-      {{ list.title }}
-    </h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-gray-800">
+        {{ list.title }}
+      </h3>
+
+      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+        {{ list.cards.length }}
+      </span>
+    </div>
 
     <!-- Cards -->
-   <div
-  v-for="card in list.cards"
-  :key="card.id"
-  class="space-y-1"
->
-  <TaskCard
-    :card="card"
-    @delete-card="emit('delete-card', $event)"
-    @update-card="emit('update-card', $event)"
-  />
+    <div class="flex flex-col gap-3">
+      <div
+        v-for="card in list.cards"
+        :key="card.id"
+        class="space-y-1"
+      >
+        <TaskCard
+          :card="card"
+          @delete-card="emit('delete-card', $event)"
+          @update-card="emit('update-card', $event)"
+        />
 
-  <div class="flex justify-between text-xs">
-    <button
-      v-if="listIndex > 0"
-      @click="moveLeft(card.id)"
-      class="text-gray-500 hover:text-blue-600"
-    >
-      ← Move
-    </button>
+        <!-- Move Buttons -->
+        <div class="flex justify-between px-1 text-xs min-h-5">
+          <button
+            v-if="listIndex > 0"
+            @click="moveLeft(card.id)"
+            class="text-gray-500 hover:text-blue-600"
+          >
+            ← Move
+          </button>
 
-    <span v-else></span>
+          <span v-else></span>
 
-    <button
-      v-if="listIndex < lists.length - 1"
-      @click="moveRight(card.id)"
-      class="text-gray-500 hover:text-blue-600"
-    >
-      Move →
-    </button>
-  </div>
-</div>
+          <button
+            v-if="listIndex < lists.length - 1"
+            @click="moveRight(card.id)"
+            class="text-gray-500 hover:text-blue-600"
+          >
+            Move →
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Add Card Section -->
-    <div class="mt-3">
+    <div class="mt-4">
       <div v-if="isAdding">
         <input
           v-model="newTitle"
-          @keyup.enter="submit"
+          @keydown.enter.prevent="submit"
           placeholder="Enter task..."
-          class="w-full p-2 rounded-md border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full p-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <div class="flex gap-2 mt-2">
           <button
-            class="bg-blue-600 text-white px-3 py-1 rounded text-sm"
             @click="submit"
+            class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700"
           >
             Add
           </button>
 
           <button
-            class="text-gray-500 text-sm"
             @click="cancel"
+            class="text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -145,8 +145,8 @@ function moveRight(cardId: string) {
 
       <button
         v-else
-        class="text-sm text-blue-600 hover:text-blue-800"
         @click="isAdding = true"
+        class="w-full text-left text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg px-2 py-2"
       >
         + Add Card
       </button>
