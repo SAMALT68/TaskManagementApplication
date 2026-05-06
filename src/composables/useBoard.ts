@@ -15,6 +15,10 @@ import { useAuth } from './useAuth'
 export type Card = {
   id: string
   title: string
+  description?: string
+  priority?: 'low' | 'medium' | 'high'
+  createdAt?: any
+  updatedAt?: any
 }
 
 export type List = {
@@ -56,14 +60,16 @@ async function addCard(listId: string, title: string, workspaceId: string) {
 
   try {
     await addDoc(collection(db, 'tasks'), {
-      title,
-      listId,
-      workspaceId,
-      userId: currentUser.value.uid,
-      role: userProfile.value.role,
-      projectId: userProfile.value.projectId,
-      createdAt: new Date()
-    })
+    title,
+    description: '',
+    listId,
+    workspaceId,
+    userId: currentUser.value.uid,
+    role: userProfile.value.role,
+    projectId: userProfile.value.projectId,
+    priority: 'medium',
+    createdAt: new Date()
+})
   } catch (error) {
     console.error('FIRESTORE WRITE ERROR:', error)
   }
@@ -91,7 +97,12 @@ async function deleteCard(cardId: string) {
   }
 }
 
-async function updateCard(cardId: string, newTitle: string) {
+async function updateCard(
+  cardId: string,
+  newTitle: string,
+  newDescription: string,
+  newPriority: 'low' | 'medium' | 'high'
+) {
   const { userProfile } = useAuth()
 
   if (!userProfile.value) {
@@ -107,6 +118,8 @@ async function updateCard(cardId: string, newTitle: string) {
   try {
     await updateDoc(doc(db, 'tasks', cardId), {
       title: newTitle,
+      description: newDescription,
+      priority: newPriority,
       updatedAt: new Date()
     })
 
@@ -170,9 +183,13 @@ function loadTasks(workspaceId: string) {
         const list = lists.value.find(l => l.id === data.listId)
         if (!list) return
 
-        list.cards.push({
+            list.cards.push({
           id: doc.id,
-          title: data.title
+          title: data.title,
+          description: data.description || '',
+          priority: data.priority || 'medium',
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt
         })
       })
     },

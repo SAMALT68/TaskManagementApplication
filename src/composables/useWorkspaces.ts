@@ -7,7 +7,8 @@ import {
   query,
   where, 
   deleteDoc, 
-  doc
+  doc, 
+  getDocs
 } from 'firebase/firestore'
 import { useAuth } from './useAuth'
 
@@ -17,6 +18,9 @@ export type Workspace = {
   projectId: string
   borderClass: string
   bgClass: string
+  totalTasks?: number
+  completedTasks?: number
+  progress?: number
 }
 
 const workspaces = ref<Workspace[]>([])
@@ -59,20 +63,45 @@ function loadWorkspaces() {
 
   onSnapshot(
     workspacesQuery,
-    (snapshot) => {
-      workspaces.value = []
+    async (snapshot) => {
+      const loadedWorkspaces: Workspace[] = []
 
-      snapshot.forEach(doc => {
-        const data = doc.data()
+      for (const workspaceDoc of snapshot.docs) {
+        const data = workspaceDoc.data()
 
-        workspaces.value.push({
-          id: doc.id,
+        const tasksQuery = query(
+          collection(db, 'tasks'),
+          where('projectId', '==', userProfile.value.projectId),
+          where('workspaceId', '==', workspaceDoc.id)
+        )
+
+        const tasksSnapshot = await getDocs(tasksQuery)
+
+        const totalTasks = tasksSnapshot.size
+
+        const completedTasks = tasksSnapshot.docs.filter(taskDoc => {
+          const taskData = taskDoc.data()
+          return taskData.listId === '3'
+        }).length
+
+        const progress =
+          totalTasks === 0
+            ? 0
+            : Math.round((completedTasks / totalTasks) * 100)
+
+        loadedWorkspaces.push({
+          id: workspaceDoc.id,
           title: data.title,
           projectId: data.projectId,
           borderClass: data.borderClass,
-          bgClass: data.bgClass
+          bgClass: data.bgClass,
+          totalTasks,
+          completedTasks,
+          progress
         })
-      })
+      }
+
+      workspaces.value = loadedWorkspaces
     },
     (error) => {
       console.error('FIRESTORE WORKSPACES READ ERROR:', error)

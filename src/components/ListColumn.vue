@@ -5,6 +5,10 @@ import TaskCard from './TaskCard.vue'
 type Card = {
   id: string
   title: string
+  description?: string
+  priority?: 'low' | 'medium' | 'high'
+  createdAt?: any
+  updatedAt?: any
 }
 
 type List = {
@@ -17,12 +21,14 @@ const props = defineProps<{
   list: List
   lists: List[]
   listIndex: number
+  canWrite: boolean
+  canDelete: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'add-card', payload: { listId: string; title: string }): void
   (e: 'delete-card', cardId: string): void
-  (e: 'update-card', payload: { cardId: string; title: string }): void
+  (e: 'update-card', payload: { cardId: string; title: string; description: string; priority: 'low' | 'medium' | 'high' }): void
   (e: 'move-card', payload: { cardId: string; newListId: string }): void
 }>()
 
@@ -69,7 +75,6 @@ function moveRight(cardId: string) {
 
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 w-72 shrink-0 min-h-[360px]">
-    <!-- Column Title -->
     <div class="flex items-center justify-between mb-4">
       <h3 class="font-bold text-gray-800">
         {{ list.title }}
@@ -80,7 +85,6 @@ function moveRight(cardId: string) {
       </span>
     </div>
 
-    <!-- Cards -->
     <div class="flex flex-col gap-3">
       <div
         v-for="card in list.cards"
@@ -89,12 +93,16 @@ function moveRight(cardId: string) {
       >
         <TaskCard
           :card="card"
+          :can-write="canWrite"
+          :can-delete="canDelete"
           @delete-card="emit('delete-card', $event)"
           @update-card="emit('update-card', $event)"
         />
 
-        <!-- Move Buttons -->
-        <div class="flex justify-between px-1 text-xs min-h-5">
+        <div
+          v-if="canWrite"
+          class="flex justify-between px-1 text-xs min-h-5"
+        >
           <button
             v-if="listIndex > 0"
             @click="moveLeft(card.id)"
@@ -116,8 +124,10 @@ function moveRight(cardId: string) {
       </div>
     </div>
 
-    <!-- Add Card Section -->
-    <div class="mt-4">
+    <div
+      v-if="canWrite"
+      class="mt-4"
+    >
       <div v-if="isAdding">
         <input
           v-model="newTitle"
@@ -151,5 +161,12 @@ function moveRight(cardId: string) {
         + Add Card
       </button>
     </div>
+
+    <p
+      v-else-if="list.cards.length === 0"
+      class="text-sm text-gray-400 mt-4"
+    >
+      No visible tasks.
+    </p>
   </div>
 </template>

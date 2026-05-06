@@ -10,13 +10,13 @@ const { currentUser, userProfile, logout } = useAuth()
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-6 py-4 bg-gray-200 border-b border-gray-300">
+  <header class="flex items-center justify-between px-6 py-4 bg-gray-200 border-b border-gray-300">
     <div>
-      <h1 class="text-xl font-bold text-gray-800">
+      <div class="text-xl font-bold text-gray-800">
         {{ title || 'SwiftTask' }}
-      </h1>
+      </div>
 
-      <p v-if="subtitle" class="text-sm text-gray-600">
+      <p v-if="subtitle" class="text-sm text-gray-600 mt-1">
         {{ subtitle }}
       </p>
 
@@ -29,9 +29,9 @@ const { currentUser, userProfile, logout } = useAuth()
 
     <button
       @click="logout"
-      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+      class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
     >
       Logout
     </button>
-  </div>
+  </header>
 </template>
